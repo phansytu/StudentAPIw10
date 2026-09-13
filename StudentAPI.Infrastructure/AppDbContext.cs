@@ -11,7 +11,8 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<SinhVien> SinhViens => Set<SinhVien>();
     public DbSet<LopHoc> LopHocs => Set<LopHoc>();
     public DbSet<BoMon> BoMons => Set<BoMon>();
-    // public DbSet<ThongKeTheoLop> ThongKeTheoLops => Set<ThongKeTheoLop>();
+    public DbSet<NguoiDung> NguoiDungs => Set<NguoiDung>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
