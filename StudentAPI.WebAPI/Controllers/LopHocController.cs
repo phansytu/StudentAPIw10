@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization; // 👈 Thêm namespace này
 using Microsoft.AspNetCore.Mvc;
 using StudentAPI.Application.Common.Exceptions;
 using StudentAPI.Application.Common.Models;
@@ -13,6 +14,7 @@ namespace StudentAPI.WebAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class LopHocController : ControllerBase
 {
     private readonly ISender _mediator;
@@ -20,6 +22,7 @@ public class LopHocController : ControllerBase
     public LopHocController(ISender mediator) => _mediator = mediator;
 
     [HttpGet]
+    [Authorize(Roles = "Admin,GiangVien,SinhVien")]
     public async Task<IActionResult> GetList([FromQuery] LayDanhSachLopHocQuery query)
     {
         var pageResult = await _mediator.Send(query);
@@ -31,6 +34,7 @@ public class LopHocController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
+    [Authorize(Roles = "Admin,GiangVien,SinhVien")]
     public async Task<IActionResult> GetById(int id)
     {
         var result = await _mediator.Send(new LayLopHocTheoIdQuery(id));
@@ -38,6 +42,7 @@ public class LopHocController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create([FromBody] TaoLopHocCommand command)
     {
         var newId = await _mediator.Send(command);
@@ -45,9 +50,10 @@ public class LopHocController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> Update(int Id, [FromBody] CapNhatLopHocCommand command)
+    [Authorize(Roles = "Admin,GiangVien")]
+    public async Task<IActionResult> Update(int id, [FromBody] CapNhatLopHocCommand command)
     {
-        if (Id != command.id)
+        if (id != command.id)
         {
             throw new BadRequestException("ID trên tham số URL không khớp với ID trong dữ liệu gửi lên.");
         }
@@ -57,6 +63,7 @@ public class LopHocController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _mediator.Send(new XoaLopHocCommand(id));

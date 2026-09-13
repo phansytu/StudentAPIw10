@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudentAPI.Application.Common.Exceptions;
 using StudentAPI.Application.Common.Models;
@@ -13,6 +14,7 @@ namespace StudentAPI.WebAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class BoMonController : ControllerBase
 {
     private readonly ISender _mediator;
@@ -20,6 +22,7 @@ public class BoMonController : ControllerBase
     public BoMonController(ISender mediator) => _mediator = mediator;
 
     [HttpGet]
+    [Authorize(Roles = "Admin,GiangVien,SinhVien")]
     public async Task<IActionResult> GetList([FromQuery] LayDanhSachBoMonQuery query)
     {
         var pageResult = await _mediator.Send(query);
@@ -31,6 +34,7 @@ public class BoMonController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
+    [Authorize(Roles = "Admin,GiangVien,SinhVien")]
     public async Task<IActionResult> GetById(int id)
     {
         var result = await _mediator.Send(new LayBoMonTheoIdQuery(id));
@@ -38,6 +42,7 @@ public class BoMonController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create([FromBody] TaoBoMonCommand command)
     {
         var newId = await _mediator.Send(command);
@@ -45,6 +50,7 @@ public class BoMonController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Update(int id, [FromBody] CapNhatBoMonCommand command)
     {
         if (id != command.Id)
@@ -57,6 +63,7 @@ public class BoMonController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _mediator.Send(new XoaBoMonCommand(id));
