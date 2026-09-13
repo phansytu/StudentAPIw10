@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using StudentAPI.Application.Common.Interfaces;
+using StudentAPI.Infrastructure.Authentication;
 using StudentAPI.Infrastructure.Persistence;
 using StudentAPI.Infrastructure.Persistence.Repositories;
 
@@ -29,6 +30,9 @@ public static class DependencyInjection
         services.AddScoped<ISinhVienRepository, SinhVienRepository>();
         services.AddScoped<ILopHocRepository, LopHocRepository>();
         services.AddScoped<IBoMonRepository, BoMonRepository>();
+        services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+        services.AddScoped<IPasswordHasher, PasswordHasher>();
+
 
         return services;
     }
