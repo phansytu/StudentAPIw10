@@ -20,6 +20,8 @@ namespace StudentAPI.Application.Common.Interfaces
         Task AddAsync(SinhVien student, CancellationToken cancellationToken);
         Task UpdateAsync(SinhVien student);
         Task DeleteAsync(SinhVien student);
+        Task<bool> ExistsByEmailAsync(string email, int? excludeId = null, CancellationToken cancellationToken = default);
+
 
     }
 

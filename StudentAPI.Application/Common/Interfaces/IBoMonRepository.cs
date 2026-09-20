@@ -4,7 +4,7 @@ namespace StudentAPI.Application.Common.Interfaces;
 
 public interface IBoMonRepository
 {
-    Task<(List<BoMon> data, int totalCount)> GetAllAsync(
+    Task<(List<BoMon> Data, int TotalCount)> GetAllAsync(
         int pageIndex,
         int pageSize,
         string? searchTerm,

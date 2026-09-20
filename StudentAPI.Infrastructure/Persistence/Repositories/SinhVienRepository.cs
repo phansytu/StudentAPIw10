@@ -85,5 +85,14 @@ public class SinhVienRepository : ISinhVienRepository
         _context.SinhViens.Remove(student);
         return Task.CompletedTask;
     }
+    public async Task<bool> ExistsByEmailAsync(string email, int? excludeId = null, CancellationToken cancellationToken = default)
+    {
+        var query = _context.SinhViens.AsNoTracking().Where(x => x.Email == email);
+
+        if (excludeId.HasValue)
+            query = query.Where(x => x.Id != excludeId.Value);
+
+        return await query.AnyAsync(cancellationToken);
+    }
 
 }

@@ -4,9 +4,12 @@ namespace StudentAPI.Application.Common.Interfaces;
 
 public interface ILopHocRepository
 {
-    Task<(List<LopHoc> data, int totalCount)> GetAllLopHocAsync(
+    Task<(List<LopHoc> Data, int TotalCount)> GetAllLopHocAsync(
         int pageIndex,
         int pageSize,
+        string? searchTerm,
+        int? boMonId,
+
         CancellationToken cancellationToken = default);
 
     Task<LopHoc?> GetByIdAsync(int id, CancellationToken cancellationToken = default);

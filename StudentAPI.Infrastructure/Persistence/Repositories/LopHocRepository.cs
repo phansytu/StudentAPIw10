@@ -13,12 +13,24 @@ public class LopHocRepository : ILopHocRepository
         _context = context;
     }
 
-    public async Task<(List<LopHoc> data, int totalCount)> GetAllLopHocAsync(
+    public async Task<(List<LopHoc> Data, int TotalCount)> GetAllLopHocAsync(
         int pageIndex,
         int pageSize,
+        string? searchTerm,
+        int? boMonId,
         CancellationToken cancellationToken = default)
     {
         var query = _context.LopHocs.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var searchKey = searchTerm.Trim().ToLower();
+            query = query.Where(x => x.TenLop!.ToLower().Contains(searchKey));
+        }
+        if (boMonId.HasValue)
+        {
+            query = query.Where(x => x.BoMonId == boMonId.Value);
+        }
 
         var totalCount = await query.CountAsync(cancellationToken);
 

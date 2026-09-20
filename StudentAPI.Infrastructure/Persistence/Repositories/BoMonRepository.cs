@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using StudentAPI.Application.Common.Interfaces;
 using StudentAPI.Domain.Entities;
 
@@ -13,7 +14,7 @@ public class BoMonRepository : IBoMonRepository
         _context = context;
     }
 
-    public async Task<(List<BoMon> data, int totalCount)> GetAllAsync(
+    public async Task<(List<BoMon> Data, int TotalCount)> GetAllAsync(
         int pageIndex,
         int pageSize,
         string? searchTerm,
@@ -73,4 +74,5 @@ public class BoMonRepository : IBoMonRepository
     {
         _context.BoMons.Remove(boMon);
     }
+
 }
