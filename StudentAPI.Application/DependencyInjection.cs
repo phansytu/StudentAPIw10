@@ -3,6 +3,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using StudentAPI.Application.Common.Behaviors;
+using StudentAPI.Application.Features.SinhVien.Rules;
 
 namespace StudentAPI.Application;
 
@@ -21,6 +22,7 @@ public static class DependencyInjection
             cfg.RegisterServicesFromAssembly(assembly);
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         });
+        services.AddScoped<ISinhVienBusinessRules, SinhVienBusinessRules>();
 
         return services;
     }

@@ -20,15 +20,17 @@ public class LayDanhSachLopHocQueryHandler : IRequestHandler<LayDanhSachLopHocQu
     public async Task<PageResponse<LopHocDto>> Handle(LayDanhSachLopHocQuery request, CancellationToken cancellationToken)
     {
 
-        var (data, totalCount) = await _repository.GetAllLopHocAsync(
+        var (Data, TotalCount) = await _repository.GetAllLopHocAsync(
             request.PageIndex,
             request.PageSize,
+           request.SearchTerm,
+           request.BoMonId,
             cancellationToken
         );
-        var items = _mapper.Map<List<LopHocDto>>(data);
+        var items = _mapper.Map<List<LopHocDto>>(Data);
         return new PageResponse<LopHocDto>(
             items,
-            totalCount,
+            TotalCount,
             request.PageIndex,
             request.PageSize);
     }

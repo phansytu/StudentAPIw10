@@ -5,7 +5,7 @@ namespace StudentAPI.Infrastructure.Caching;
 
 public class CachedLopHocRepository : ILopHocRepository
 {
-    private readonly ILopHocRepository _decorated;
+    private readonly ILopHocRepository _repository;
     private readonly ICacheService _cache;
 
     private const string ListPrefix = "lophoc:list:";
@@ -13,7 +13,7 @@ public class CachedLopHocRepository : ILopHocRepository
 
     public CachedLopHocRepository(ILopHocRepository decorated, ICacheService cache)
     {
-        _decorated = decorated;
+        _repository = decorated;
         _cache = cache;
     }
 
@@ -23,40 +23,40 @@ public class CachedLopHocRepository : ILopHocRepository
         var key = $"{ListPrefix}{pageIndex}_{pageSize}_{searchTerm}_{boMonId}";
         return _cache.GetOrCreateAsync(
             key,
-            () => _decorated.GetAllLopHocAsync(pageIndex, pageSize, searchTerm, boMonId, cancellationToken),
+            () => _repository.GetAllLopHocAsync(pageIndex, pageSize, searchTerm, boMonId, cancellationToken),
             Ttl, cancellationToken)!;
     }
 
     public Task<LopHoc?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         => _cache.GetOrCreateAsync(
             $"lophoc:id:{id}",
-            () => _decorated.GetByIdAsync(id, cancellationToken),
+            () => _repository.GetByIdAsync(id, cancellationToken),
             Ttl, cancellationToken)!;
 
     public Task<bool> IsMaLopUniqueAsync(string maLop, CancellationToken cancellationToken = default)
         => _cache.GetOrCreateAsync(
             $"lophoc:malop:{maLop.Trim().ToLower()}",
-            () => _decorated.IsMaLopUniqueAsync(maLop, cancellationToken),
+            () => _repository.IsMaLopUniqueAsync(maLop, cancellationToken),
             Ttl, cancellationToken)!;
 
 
 
     public async Task AddAsync(LopHoc lopHoc, CancellationToken cancellationToken = default)
     {
-        await _decorated.AddAsync(lopHoc, cancellationToken);
+        await _repository.AddAsync(lopHoc, cancellationToken);
         _cache.RemoveByPrefix(ListPrefix);
         _cache.Remove($"lophoc:bomon:{lopHoc.BoMonId}");
     }
 
     public async Task UpdateAsync(LopHoc lopHoc)
     {
-        await _decorated.UpdateAsync(lopHoc);
+        await _repository.UpdateAsync(lopHoc);
         InvalidateAll(lopHoc);
     }
 
     public void Delete(LopHoc lopHoc)
     {
-        _decorated.Delete(lopHoc);
+        _repository.Delete(lopHoc);
         InvalidateAll(lopHoc);
     }
 
