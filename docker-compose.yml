@@ -1,0 +1,65 @@
+version: "3.9"
+
+services:
+  # ===================== SQL SERVER =====================
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: studentapi-sqlserver
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "YourStrong@Passw0rd"   # Đổi lại mật khẩu mạnh hơn nếu cần
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - studentapi-network
+
+  # ===================== REDIS =====================
+  redis:
+    image: redis:7-alpine
+    container_name: studentapi-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ""
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - studentapi-network
+
+  # ============ REDIS INSIGHT (GUI xem key, tùy chọn) ============
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: studentapi-redisinsight
+    restart: unless-stopped
+    ports:
+      - "5540:5540"
+    depends_on:
+      - redis
+    volumes:
+      - redisinsight_data:/data
+    networks:
+      - studentapi-network
+
+networks:
+  studentapi-network:
+    driver: bridge
+
+volumes:
+  sqlserver_data:
+  redis_data:
+  redisinsight_data:

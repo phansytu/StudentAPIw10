@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 using StudentAPI.Application.Common.Interfaces;
 using StudentAPI.Infrastructure.Authentication;
 using StudentAPI.Infrastructure.Caching;
@@ -21,8 +22,23 @@ public static class DependencyInjection
                 b => b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)
             ));
 
-        services.AddMemoryCache();
-        services.AddSingleton<ICacheService, InMemoryCacheService>();
+
+
+        var redisConnectionString = configuration.GetConnectionString("Redis")
+        ?? throw new InvalidOperationException("Thiếu Redis connection string");
+
+        services.AddSingleton<IConnectionMultiplexer>(
+            ConnectionMultiplexer.Connect(redisConnectionString));
+
+        services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = redisConnectionString;
+            options.InstanceName = "studentapi:";
+        });
+        // services.AddMemoryCache();
+        // services.AddSingleton<ICacheService, InMemoryCacheService>();
+        services.AddSingleton<ICacheService, RedisCacheService>();
+
 
 
 
