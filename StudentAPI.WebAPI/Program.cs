@@ -5,9 +5,7 @@ using StudentAPI.WebAPI.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using StudentAPI.Domain.Entities;
-using StudentAPI.Application.Common.Interfaces;
-using Microsoft.EntityFrameworkCore;
+using Serilog;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
@@ -80,8 +78,12 @@ builder.Services.AddApplicationServices();
 
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
+builder.Host.UseSerilog((context, config) =>
+    config.ReadFrom.Configuration(context.Configuration));
+
 var app = builder.Build();
 
+app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
@@ -90,45 +92,39 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Student API v1");
-        c.RoutePrefix = string.Empty; // Mở Swagger ngay tại Root URL (http://localhost:<port>/)
+        c.RoutePrefix = string.Empty;
     });
 }
 
 app.UseHttpsRedirection();
-
+app.UseRouting();
 app.UseCors("AllowAll");
+
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseSerilogRequestLogging(options =>
+{
+    options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
+
+    options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+    {
+        diagnosticContext.Set("RequestHost", httpContext.Request.Host.Value);
+        diagnosticContext.Set("UserAgent", httpContext.Request.Headers["User-Agent"].ToString());
+
+        if (httpContext.User.Identity?.IsAuthenticated == true)
+        {
+            diagnosticContext.Set("UserId", httpContext.User.FindFirst("sub")?.Value);
+        }
+    };
+    options.GetLevel = (httpContext, elapsed, ex) =>
+        ex != null || httpContext.Response.StatusCode >= 500
+            ? Serilog.Events.LogEventLevel.Error
+            : httpContext.Response.StatusCode >= 400
+                ? Serilog.Events.LogEventLevel.Warning
+                : Serilog.Events.LogEventLevel.Information;
+});
+
 app.MapControllers();
-// using (var scope = app.Services.CreateScope())
-// {
-//     var context = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-//     var unit = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-//     var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
 
-//     // Tự động Apply Migration nếu chưa có
-//     if (context is AppDbContext dbContext)
-//     {
-//         await dbContext.Database.MigrateAsync();
-//     }
-
-
-//     var hasAdmin = await context.NguoiDungs.AnyAsync(x => x.Role == "Admin");
-//     if (!hasAdmin)
-//     {
-//         var adminUser = new NguoiDung
-//         {
-//             Email = "admin@studentapi.com",
-//             PasswordHash = passwordHasher.HashPassword("Admin@123456"),
-//             HoTen = "System Administrator",
-//             Role = "Admin",
-//             IsActive = true,
-//             CreatedAt = DateTime.UtcNow
-//         };
-
-//         context.NguoiDungs.Add(adminUser);
-//         await unit.SaveChangesAsync();
-//     }
-// }
 app.Run();
