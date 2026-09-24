@@ -49,7 +49,11 @@ public static class DependencyInjection
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-        services.AddScoped<ISinhVienRepository, SinhVienRepository>();
+        services.AddScoped<SinhVienRepository>();
+        services.AddScoped<ISinhVienRepository>(sp =>
+            new CachedSinhVienRepository(
+                sp.GetRequiredService<SinhVienRepository>(),
+                sp.GetRequiredService<ICacheService>()));
 
         services.AddScoped<BoMonRepository>();
         services.AddScoped<IBoMonRepository>(sp =>
