@@ -19,7 +19,7 @@ namespace StudentAPI.WebAPI.Middlewares
             Exception exception,
             CancellationToken cancellationToken)
         {
-
+            var correlationId = httpContext.Items["CorrelationId"]?.ToString() ?? httpContext.TraceIdentifier;
             if (exception is ValidationException validationException)
             {
                 _logger.LogWarning(
@@ -35,67 +35,40 @@ namespace StudentAPI.WebAPI.Middlewares
                         g => g.Select(e => e.ErrorMessage).ToArray()
                     );
 
-                var problemDetails =
-                    new HttpValidationProblemDetails(errors)
-                    {
-                        Status =
-                            StatusCodes.Status400BadRequest,
+                var validationProblem = new HttpValidationProblemDetails(errors)
+                {
+                    Status = StatusCodes.Status400BadRequest,
+                    Title = "Dữ liệu không hợp lệ",
+                    Detail = "Vui lòng kiểm tra lại dữ liệu gửi lên.",
+                    Instance = httpContext.Request.Path,
+                    Extensions = { ["correlationId"] = correlationId }
+                };
 
-                        Title = "Dữ liệu không hợp lệ",
+                httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
 
-                        Detail =
-                            "Vui lòng kiểm tra lại dữ liệu gửi lên.",
-
-                        Instance =
-                            httpContext.Request.Path
-                    };
-
-                httpContext.Response.StatusCode =
-                    StatusCodes.Status400BadRequest;
-
-                await httpContext.Response.WriteAsJsonAsync(
-                    problemDetails,
-                    cancellationToken
-                );
-
+                await httpContext.Response.WriteAsJsonAsync(validationProblem, cancellationToken);
                 return true;
             }
+
+
             var (statusCode, title) = exception switch
             {
-                NotFoundException =>
-                     (
-                         StatusCodes.Status404NotFound,
-                         "Không tìm thấy tài nguyên"
-                     ),
-
-                BadRequestException =>
-                     (
-                         StatusCodes.Status400BadRequest,
-                         "Yêu cầu không hợp lệ"
-                     ),
-
-                _ =>
-                    (
-                        StatusCodes.Status500InternalServerError,
-                        "Lỗi hệ thống"
-                    )
+                NotFoundException => (StatusCodes.Status404NotFound, "Không tìm thấy tài nguyên"),
+                BadRequestException => (StatusCodes.Status400BadRequest, "Yêu cầu không hợp lệ"),
+                BusinessException => (StatusCodes.Status409Conflict, "Vi phạm quy tắc nghiệp vụ"),
+                UnauthorizedAccessException => (StatusCodes.Status401Unauthorized, "Không có quyền truy cập"),
+                _ => (StatusCodes.Status500InternalServerError, "Lỗi hệ thống")
             };
+
             if (statusCode >= 500)
             {
-                _logger.LogError(
-                    exception,
-                    "Lỗi hệ thống tại {Path}",
-                    httpContext.Request.Path
-                );
+                _logger.LogError(exception, "Lỗi hệ thống tại {Path}. CorrelationId={CorrelationId}",
+                    httpContext.Request.Path, correlationId);
             }
             else
             {
-                _logger.LogWarning(
-                    exception,
-                    "Lỗi request tại {Path}: {Message}",
-                    httpContext.Request.Path,
-                    exception.Message
-                );
+                _logger.LogWarning("Lỗi request tại {Path}: {Message}. CorrelationId={CorrelationId}",
+                    httpContext.Request.Path, exception.Message, correlationId);
             }
 
             var response = new ProblemDetails
@@ -106,7 +79,8 @@ namespace StudentAPI.WebAPI.Middlewares
 
                 Detail = exception.Message,
 
-                Instance = httpContext.Request.Path
+                Instance = httpContext.Request.Path,
+                Extensions = { ["correlationId"] = correlationId }
             };
 
             httpContext.Response.StatusCode =
