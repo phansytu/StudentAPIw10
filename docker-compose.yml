@@ -1,14 +1,13 @@
 version: "3.9"
 
 services:
-  # ===================== SQL SERVER =====================
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: studentapi-sqlserver
     restart: unless-stopped
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "YourStrong@Passw0rd"   # Đổi lại mật khẩu mạnh hơn nếu cần
+      MSSQL_SA_PASSWORD: "Student@Password" 
       MSSQL_PID: "Developer"
     ports:
       - "1433:1433"
@@ -23,7 +22,6 @@ services:
     networks:
       - studentapi-network
 
-  # ===================== REDIS =====================
   redis:
     image: redis:7-alpine
     container_name: studentapi-redis
@@ -41,7 +39,6 @@ services:
     networks:
       - studentapi-network
 
-  # ============ REDIS INSIGHT (GUI xem key, tùy chọn) ============
   redisinsight:
     image: redis/redisinsight:latest
     container_name: studentapi-redisinsight
