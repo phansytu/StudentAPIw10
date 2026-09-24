@@ -3,4 +3,4 @@ using StudentAPI.Application.DTOs;
 
 namespace StudentAPI.Application.Features.BaoCao.Queries.LayThongKeTheoLop;
 
-public record LayThongKeLopHocQuery(int? BoMonId = null) : IQuery<IEnumerable<ThongKeLopHocDto>>;
+public record LayThongKeLopHocQuery(int? BoMonId = null, int? LopHocId = null) : IQuery<IEnumerable<ThongKeLopHocDto>>;

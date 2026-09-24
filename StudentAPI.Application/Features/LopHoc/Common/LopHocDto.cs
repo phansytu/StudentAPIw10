@@ -7,5 +7,5 @@ public class LopHocDto
     public string TenLop { get; set; } = string.Empty;
     public string ChuyenNganh { get; set; } = string.Empty;
     public int BoMonId { get; set; }
-    public string? TenBoMon { get; set; }
+
 }

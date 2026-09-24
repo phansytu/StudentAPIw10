@@ -10,9 +10,12 @@ namespace StudentAPI.Application.Features.BaoCao.Queries.LayThongKeTongQuan;
 public class LayThongKeTongQuanHandler : IRequestHandler<LayThongKeTongQuanQuery, ThongKeTongQuanDto>
 {
     private readonly ISqlConnectionFactory _connectionFactory;
-
-    public LayThongKeTongQuanHandler(ISqlConnectionFactory connectionFactory)
+    private readonly ICacheService _cache;
+    private const string ListPrefix = "thongke:tongquat:";
+    private static readonly TimeSpan Ttl = TimeSpan.FromMinutes(15);
+    public LayThongKeTongQuanHandler(ISqlConnectionFactory connectionFactory, ICacheService cache)
     {
+        _cache = cache;
         _connectionFactory = connectionFactory;
     }
 
@@ -20,13 +23,20 @@ public class LayThongKeTongQuanHandler : IRequestHandler<LayThongKeTongQuanQuery
         LayThongKeTongQuanQuery request,
         CancellationToken cancellationToken)
     {
-        using var connection = _connectionFactory.CreateConnection();
+        var key = $"{ListPrefix}";
+        var result = await _cache.GetOrCreateAsync(
+            key,
+            async () =>
+            {
+                using var connection = _connectionFactory.CreateConnection();
+                return await connection.QueryFirstOrDefaultAsync<ThongKeTongQuanDto>(
+                        "sp_Dashboard_GetSummaryStats",
+                        commandType: CommandType.StoredProcedure
+    );
+            },
+            Ttl, cancellationToken
 
-        var result = await connection.QueryFirstOrDefaultAsync<ThongKeTongQuanDto>(
-            "sp_Dashboard_GetSummaryStats",
-            commandType: CommandType.StoredProcedure
-        );
-
+        )!;
         return result ?? new ThongKeTongQuanDto();
     }
 }
