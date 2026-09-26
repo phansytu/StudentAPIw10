@@ -135,3 +135,32 @@ Hệ thống backend quản lý Sinh viên, Lớp học, Bộ môn với xác th
 | TC-LH-02 | `DELETE /api/LopHoc/{id}` khi lớp không có sinh viên | 200 OK / 204 No Content | ☐ |
 | TC-EX-01 | Lỗi Validate FluentValidation | 400 Bad Request, body cấu trúc `ValidationProblemDetails` | ☐ |
 | TC-EX-02 | Lỗi `NotFoundException` | 404 Not Found, `ProblemDetails.Title = "Không tìm thấy tài nguyên"` | ☐ |
+
+### Nơi cache đang được áp dụng
+
+| Vị trí | Cách dùng | Ghi chú |
+|---|---|---|
+| `CachedBoMonRepository` | Decorator bọc `IBoMonRepository` | Cache danh mục (master data), TTL dài |
+| `CachedLopHocRepository` | Decorator bọc `ILopHocRepository` | Cache danh mục, invalidate theo chuỗi quan hệ với BoMon |
+| `CachedSinhVienRepository` | Decorator bọc `ISinhVienRepository` | Cache dữ liệu sinh viên, TTL ngắn hơn vì thay đổi thường xuyên |
+| `BaoCao/Queries/*` (LayBaoCaoChiTietSinhVien, LayDanhSachSinhVienPhanTrang, LayThongKeTheoLop, LayThongKeTongQuan) | Gọi **trực tiếp** `ICacheService` trong Handler (không qua Decorator) | Vì đây là dữ liệu tổng hợp/tính toán (report), không map 1-1 với 1 Repository nào, nên cache ngay tại Handler hợp lý hơn |
+
+## 2. Chạy Redis (Docker)
+
+```bash
+docker compose up -d redis
+```
+
+Kiểm tra Redis đã chạy:
+
+```bash
+docker exec -it studentapi-redis redis-cli ping
+# Kết quả mong đợi: PONG
+```
+
+Xem log container nếu có lỗi:
+
+```bash
+docker compose logs redis
+```
+
